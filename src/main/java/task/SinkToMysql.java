@@ -1,6 +1,7 @@
-package mains;
+package task;
 
 import bean.ActionStat;
+import bean.MyMap;
 import bean.UserAction;
 import com.alibaba.fastjson.JSONObject;
 import kafka.KafkaConsumer;
@@ -40,6 +41,8 @@ public class SinkToMysql {
         // 创建 flink 环境
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+//        env.setStateBackend(new MemoryStateBackend());
+//        env.setStateBackend(new FsStateBackend(""));
 
         // 连接数据源
         DataStream dataStream = env.addSource(KafkaConsumer.consumer(brokers, groupId, topic));
@@ -86,27 +89,6 @@ public class SinkToMysql {
         env.execute("flink-online");
     }
 
-    // 自定义 map 函数
-    static class MyMap implements MapFunction<String, UserAction> {
-
-        @Override
-        public UserAction map(String value) throws Exception {
-
-            JSONObject jsonObject = JSONObject.parseObject(value);
-            JSONObject content = JSONObject.parseObject(jsonObject.getString("content"));
-            if (jsonObject.getString("content") != null){
-                JSONObject properties = JSONObject.parseObject(content.getString("properties"));
-                String userId = properties.getString("userId");
-                String articleId = properties.getString("article_id");
-                String action = content.getString("event");
-
-                UserAction us = new UserAction(userId, articleId, action);
-                return us;
-            }
-            return null;
-        }
-    }
-
     static class MyAggr implements AggregateFunction<UserAction, ActionStat, ActionStat>{
 
         ActionStat actionStat = new ActionStat();
@@ -132,7 +114,6 @@ public class SinkToMysql {
 
         @Override
         public ActionStat merge(ActionStat a, ActionStat b) {
-
             actionStat.count = a.count + b.count;
             return actionStat;
         }
