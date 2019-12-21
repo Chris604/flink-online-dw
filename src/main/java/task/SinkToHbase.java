@@ -81,7 +81,7 @@ public class SinkToHbase {
     /**
      * This class implements an OutputFormat for HBase.
      */
-    private static class HBaseOutputFormat extends RichSinkFunction<UserAction> {
+    public static class HBaseOutputFormat extends RichSinkFunction<UserAction> {
 
         private static final Logger logger = LoggerFactory.getLogger(HBaseOutputFormat.class);
 
